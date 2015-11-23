@@ -1,4 +1,4 @@
-package findingNote;
+package pureToneTests;
 
 public class ComplexNum {
 

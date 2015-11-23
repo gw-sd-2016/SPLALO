@@ -1,4 +1,4 @@
-package findingNote;
+package pureToneTests;
 //PLAY USER INPUT FREQUENCY, WRITE TO .WAV FILE AND WORKING ON PROCESSING FOR FREQUENCY
 
 import java.io.ByteArrayInputStream;
