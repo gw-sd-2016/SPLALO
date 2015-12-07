@@ -39,7 +39,7 @@ public class RecordingAttempt {
 
 		try
 		{	
-			AudioFormat format = new AudioFormat(sampleRate, 16, 2, true, true);
+			AudioFormat format = new AudioFormat(sampleRate, 16, 1, true, true);
 			//AudioFormat format = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 44100, 16, 2, 4, 44100, false);
 			DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
 
@@ -87,14 +87,16 @@ public class RecordingAttempt {
 	//						System.out.println("Integer = " + intBuffer[index] + " Byte = " + byteBuffer[index]);
 //							System.out.println("Binary = " + Integer.toBinaryString(intBuffer[index]) + "\n");
 						
-						byte [] binaryArray = new byte [8];
-						for(int i = 0; i < 8; i++)
+						
+						for(int i = 0; i < byteBuffer.length; i+=2)
 							{
-								binaryArray[i] = byteBuffer[index+i];
+								//binaryArray[i] = byteBuffer[index+i];
+								//System.out.println(byteBuffer[i] + ", " + byteBuffer[i+1] + ", " + (short)(((byteBuffer[i] & 0xff) << 8) + (byteBuffer[i+1] & 0xff))/(short)32768);
+								
 								//binaryArray[(index*8) + i] = Integer.toBinaryString(intBuffer[index]).charAt(i);
 							}
 							
-							System.out.println("Float value: " + ByteBuffer.wrap(binaryArray).getDouble	());
+							//System.out.println("Float value: " + ByteBuffer.wrap(binaryArray).getDouble	());
 							//.getDouble());
 						}
 					//System.out.println(binaryArray.toString());

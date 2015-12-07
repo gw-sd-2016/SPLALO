@@ -47,9 +47,10 @@ class PureToneTests {
 
 		
 		//Play pure tone
-		AudioFormat format = new AudioFormat(testSampleRate, 16, 1, true, true);
+		AudioFormat format = new AudioFormat(testSampleRate, 16, 1, true, false);
 		DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
 
+		//Converts the double wave array (where the test pure tone values are held) into an array of doubles
 		byte [] buffer = new byte[wave.length*8];
 		for(int i = 0; i < wave.length; i++)
 		{
@@ -104,47 +105,48 @@ class PureToneTests {
 		
 		try 
 		{
-			
-			AudioInputStream input = AudioSystem.getAudioInputStream(audioFile);
+			File audioFile2 = new File("just-major-sc.wav");						
+			AudioInputStream input = AudioSystem.getAudioInputStream(audioFile2);
 			byteValues = new byte[input.available()];
-			//InputStream input = new FileInputStream(audioFile);
 			input.read(byteValues);
-			/*
-			for(int i = 0; i+8 <= byteValues.length; i+=8)
-			{
-				
-				byte miniByteArray[] = new byte [8];
-				for(int j = 0; j < 8; j++)
-				{
-					if(i == 80)
-						System.out.print(byteValues[i+j] + ", ");
-					
-					miniByteArray[j] = byteValues[i+j];
-				}
-				doubleValues[i/8] = ByteBuffer.wrap(miniByteArray).getDouble();
-				//System.out.println("i Value: " + i/8 + "Double: " + doubleValues[i/8]);
-			}
-			*/
 			
 			doubleValues = new double[byteValues.length/2];
-			for(int i = 0; i < doubleValues.length; i++)
-				doubleValues[i] = (short)(((byteValues[i] & 0xff) << 8) + (byteValues[i+1] & 0xff))/(short)32767;
-
+			for(int i = 0; i < byteValues.length; i+=2)
+			{
+				doubleValues[i/2] = (short) (((byteValues[i+1] & 0xff) << 8) | (byteValues[i] & 0xff));
+				doubleValues[i/2] /= 32768;
+			}
+			
+			System.out.println("Format: " + input.getFormat());
+			
+			/*	FOR TESTING AND COMPARING WAVE AND DOUBLE VALUES ARRAYS BY PRINTING VALUES
+			for(int i = 0; i < wave.length; i++)
+				System.out.printf("%.4f , %.4f \n", wave[i], doubleValues[i]);
+			*/
+			
+			/*
+			System.out.println("The Force ... ");
+			for(double x: doubleValues)
+				System.out.println(x);
+			*/
 			
 			//Set to array of complex number values for processing
-			int windowSize = testSampleRate/4;
+			int windowSize = testSampleRate/10;
 			double timeStart = System.currentTimeMillis();
 			List<ArrayList<Float>> freqArray = new ArrayList<ArrayList<Float>>(wave.length/windowSize); 
+			ArrayList<Note> noteArray = new ArrayList<Note>(wave.length/windowSize); 
+			
 			for(int j = 0; j < wave.length - windowSize; j+= windowSize)
 			{
-				ComplexNum complexArray [] = new ComplexNum[testSampleRate/20]; 
+				ComplexNum complexArray [] = new ComplexNum[testSampleRate/10]; 
 				for(int i = 0; i < complexArray.length; i++)
 				{
-					ComplexNum tempor = new ComplexNum(wave[i+j], 0);
+					ComplexNum tempor = new ComplexNum(doubleValues[i+j], 0);
 					complexArray[i] = tempor;
 				}
 				
 				List<Float> f = findFrequency(complexArray);
+				
 				if(j == 0)
 					{
 						freqArray.add((ArrayList<Float>) f);
@@ -153,23 +155,33 @@ class PureToneTests {
 								compareFreq(freq);
 								System.out.println();
 							}
+						Note newNote = new Note();
+						newNote.setStartTime((double) j/(double) testSampleRate);
+						newNote.setFrequency(f);
+						noteArray.add(newNote);
+					
 					}
 				else
 				{
 					if( !f.containsAll(freqArray.get(freqArray.size()-1)) )
 						{
+							Note newNote = new Note();
+							newNote.setStartTime((double) j/(double) testSampleRate);
 							freqArray.add((ArrayList<Float>) f);
 							for(Float freq: f)
 							{
 								compareFreq(freq);
 								System.out.println();
 							}
+							
+							newNote.setFrequency(f);
+							noteArray.add(newNote);
 						}
 				}
 			}
 						
-			for(int i = 0; i < freqArray.size(); i++)
-				System.out.println("Note/Chord " + (i+1) + " has " + freqArray.get(i).toString());
+			for(int i = 0; i < noteArray.size(); i++)
+				System.out.println("Note/Chord " + (i+1) + " has " + ((Note) noteArray.get(i)).getFrequency().toString() + " at time " + noteArray.get(i).getStartTime());
 			
 
 			double timeEnd = System.currentTimeMillis();
@@ -250,7 +262,8 @@ class PureToneTests {
 					if(fileFreq <= (1.025 * constantTones[j] * (Math.pow(2,i)) )  )
 					{
 						String note = findNoteValue(j);
-						System.out.print(note + "" + i + " ");
+						String fullNote = note + i;
+						System.out.print(fullNote);
 						break;
 					}
 
@@ -273,6 +286,7 @@ class PureToneTests {
 		double sampleTime;
 		double constantPeriod = 2*Math.PI*freq;
 		
+		/*
 		for(int i = 0; i < array.length; i++)
 		{
 			sampleTime = ((double)i)/sampleRate;
@@ -288,6 +302,30 @@ class PureToneTests {
 			array[i] = Math.sin(Math.PI*freq * (sampleTime));
 		}
 		
+		*/
+		
+		//Series of pure tones for testing
+		//C4
+		for(int x = 0; x < array.length/5; x++)
+			array[x] = Math.sin(2 * Math.PI * 261.63 * ((double)x)/sampleRate);
+		
+		//E4
+		for(int x = array.length/5; x < 2 * array.length/5; x++)
+			array[x] = Math.sin(2 * Math.PI * 329.63 * ((double)x)/sampleRate);
+		
+		//G4
+				for(int x = 2 * array.length/5; x < 3 * array.length/5; x++)
+					array[x] = Math.sin(2 * Math.PI * 392.00 * ((double)x)/sampleRate);
+		
+
+		//E4
+		for(int x = 3 * array.length/5; x < 4 * array.length/5; x++)
+			array[x] = Math.sin(2 * Math.PI * 329.63 * ((double)x)/sampleRate);
+		
+
+		//C4
+		for(int x = 4 * array.length/5; x < array.length; x++)
+			array[x] = Math.sin(2 * Math.PI * 261.63 * ((double)x)/sampleRate);
 		return array;
 
 	}
@@ -300,10 +338,10 @@ class PureToneTests {
 		//It accepts an array of complex numbers with discrete values from the sound
 		
 		//DFT loop to determine strength of frequency
-		ComplexNum strength[] = new ComplexNum[wave.length];		//THis variable will be used to store the strength of a frequency in the wave
+		//ComplexNum strength[] = new ComplexNum[wave.length];		//THis variable will be used to store the strength of a frequency in the wave
 		ComplexNum temp = new ComplexNum();
 		ComplexNum sum = new ComplexNum(0,0);
-		//ComplexNum fraction = new ComplexNum((1/strength.length), 0);
+		
 		double mag[] = new double [wave.length];
 		long timeStart = System.currentTimeMillis();
 		for(int k = 0; k < wave.length; k++)
@@ -314,7 +352,7 @@ class PureToneTests {
 			for(int t = 0; t < wave.length; t++)
 			{
 				double realTemp = Math.cos(-2 * Math.PI * k * t /wave.length);
-				double imagTemp = Math.sin(- 2 * Math.PI * k *t/wave.length);
+				double imagTemp = Math.sin(- 2 * Math.PI * k * t /wave.length);
 				
 				temp.setReal((realTemp*wave[t].getReal()));
 				temp.setImaginary((imagTemp*wave[t].getReal()));
@@ -329,7 +367,7 @@ class PureToneTests {
 		double average = 0;
 		for(double D: mag)
 			average += D;
-		
+	
 		average = average/mag.length;
 		
 		List<Float> found = process(mag, testSampleRate, wave.length, 1);
@@ -347,7 +385,8 @@ class PureToneTests {
 	
 	
 
-	  static List<Float> process(double results[], float sampleRate, int numSamples, int sigma) {
+	  static List<Float> process(double results[], float sampleRate, int numSamples, int sigma) 
+	  {
 	    double average = 0;
 	    for (int i = 0; i < results.length; i++) {
 	      average += results[i];
@@ -360,7 +399,7 @@ class PureToneTests {
 	    }
 
 	    double stdev = Math.sqrt(sums/(results.length-1));
-
+	    //System.out.println(stdev);
 	    ArrayList<Float> found = new ArrayList<Float>();
 	    double max = Integer.MIN_VALUE;
 	    int maxF = -1;
