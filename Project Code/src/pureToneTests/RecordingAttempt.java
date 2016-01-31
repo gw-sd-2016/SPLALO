@@ -60,7 +60,7 @@ public class RecordingAttempt {
 				{
 					AudioInputStream audioStream = new AudioInputStream(targetLine);
 					File audioFile = new File("testRecord.wav");					
-
+ 
 					try  
 					{
 						int size = AudioSystem.write(audioStream, Type.WAVE, audioFile);

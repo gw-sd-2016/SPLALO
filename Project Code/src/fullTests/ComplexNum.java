@@ -1,4 +1,4 @@
-package pureToneTests;
+package fullTests;
 
 public class ComplexNum {
 

@@ -1,4 +1,4 @@
-package pureToneTests;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,8 +12,6 @@ public class Note {
 	private double endTime;
 	private String timingValue;
 	private double timingValConstant; 		//Based of JMusic notation library constants
-	
-	public int num = 0;
 	
 	public Note()
 	{
