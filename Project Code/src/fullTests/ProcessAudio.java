@@ -10,6 +10,7 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import be.tarsos.dsp.AudioEvent;
 import be.tarsos.dsp.filters.BandPass;
 
 
@@ -18,7 +19,7 @@ public class ProcessAudio {
 	private	static int testSampleRate;
 	private String audioFileName;
 	
-	public static double normalizedRestThreshold;		//For averaged frequencies below this threshold, a segment is considered at rest and will be notated as such
+	public static double normalizedRestThreshold = -10.0;		//For averaged frequencies below this threshold, a segment is considered at rest and will be notated as such
 	public static double normalizedNoteThreshold;		//For average frequencies above this threshold, a segment is considered
 	
 	public ProcessAudio(String fileName, int sampleRate)
@@ -56,22 +57,48 @@ public class ProcessAudio {
 		
 	}
 
-	public ComplexNum[] DoubleArraytoComplexArray(double doubleValues[], int start)
+	public double[] ByteArrayToDoubleArray(byte byteValues[])
 	{
-		ComplexNum[] complexArray = new ComplexNum[testSampleRate/20]; 
+			double doubleValues [] = new double[byteValues.length/2];
+			
+			for(int i = 0; i < byteValues.length; i+=2)
+			{
+				doubleValues[i/2] = (short) (((byteValues[i+1] & 0xff) << 8) | (byteValues[i] & 0xff));
+				doubleValues[i/2] /= 32768;			
+			}
+			
+			return doubleValues; 
+	}
+	
+	public ComplexNum[] DoubleArraytoComplexArray(double doubleValues[])
+	{
+		ComplexNum[] complexArray = new ComplexNum[doubleValues.length]; 
 		for(int i = 0; i < complexArray.length; i++)
 		{
-			ComplexNum tempor = new ComplexNum(doubleValues[start + i], 0);
+			ComplexNum tempor = new ComplexNum(doubleValues[i], 0);
 			complexArray[i] = tempor;
 		}
 		
 		return complexArray;
 	}
 	
-	public double[] BandPassFilter(double doubleValues[])
+	public double DoubleArraytoDecibelArray(double [] doubleArray, double max)
+	{
+		double rootMeanSquared = 0;
+		for(double x: doubleArray)
+			rootMeanSquared += x*x;
+		
+		rootMeanSquared /= doubleArray.length;
+		rootMeanSquared = Math.sqrt(rootMeanSquared);
+		//System.out.println("Max = " + max);
+		return (20 * Math.log10(rootMeanSquared/max));
+	}
+	
+	
+	public double[] BandPassFilter(double doubleValues[], AudioEvent ae)
 	{
 		BandPass filter = new BandPass(2106.75f, 4158.5f, testSampleRate);
-	
+		filter.process(ae);
 		return null;
 	}
 	
@@ -85,6 +112,16 @@ public class ProcessAudio {
 			averageAmps[i/(testSampleRate/20)] = calcAverageAmp(wave, i, i + (testSampleRate/20));		//Store average amplitudes in array
 		
 		return averageAmps;
+	}
+	
+	public double findMaxAmp(double wave[])
+	{
+		double max = Double.MIN_VALUE;
+		
+		for(double x: wave)
+			{if(x > max) max = x;}
+		
+		return max;
 	}
 	
 	//The following method receive a double array representing amplitudes in some portion of code and calculate for the average amplitude

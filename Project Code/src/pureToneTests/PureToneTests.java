@@ -401,7 +401,10 @@ public class PureToneTests implements JMC{
 		List<Float> foundFrequencies = new ArrayList<Float>();
 		long timeEnd = System.currentTimeMillis();
 		for (float freq : found) 
-			foundFrequencies.add(freq);
+		{
+			if(freq > 20 && freq < 20000)
+				foundFrequencies.add(freq);
+		}
 
 	    return (foundFrequencies);
 	}

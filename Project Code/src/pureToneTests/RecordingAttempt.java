@@ -42,7 +42,7 @@ public class RecordingAttempt {
 			AudioFormat format = new AudioFormat(sampleRate, 16, 1, true, true);
 			//AudioFormat format = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 44100, 16, 2, 4, 44100, false);
 			DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
-
+		
 			if(!AudioSystem.isLineSupported(info))
 				System.err.println("Line not supported");
 

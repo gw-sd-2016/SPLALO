@@ -9,7 +9,7 @@ public class GUITester {
 
 		GUI UserInterface = new GUI();
 		UserInterface.setDefaultCloseOperation(UserInterface.EXIT_ON_CLOSE);
-		UserInterface.setSize(320, 240);
+		UserInterface.setSize(240, 80);
 		UserInterface.setVisible(true);
 		
 		
