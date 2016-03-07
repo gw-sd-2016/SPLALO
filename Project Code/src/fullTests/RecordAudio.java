@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.sound.sampled.AudioFormat;
@@ -19,12 +20,14 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 
 import be.tarsos.dsp.AudioEvent;
 import be.tarsos.dsp.io.TarsosDSPAudioFormat;
+import pureToneTests.Note;
 
 public class RecordAudio {
 
 	private final int sampleRate;
 	private String audioFileName;
 	private static TargetDataLine targetLine;
+	public static double normalizedRestThreshold = -12.0;		//For averaged frequencies below this threshold, a segment is considered at rest and will be notated as such
 	
 	public RecordAudio(int sampleRate, String fileName) throws LineUnavailableException
 	{
@@ -79,16 +82,24 @@ public class RecordAudio {
 								pa.BandPassFilter(doubleArray, ae);
 								*/
 								
-								
+								//Variables to emulate windows and timing values & peak amplitudes within them.
 								double max = 0, soundBegin = 0;
-								double doubleBuffer[] = new double[sampleRate/10];
+								int windowSize = sampleRate/10;
+								double doubleBuffer[] = new double[windowSize];
 								
+								//Tracking program efficiency
 								long beginProcess = System.currentTimeMillis();
 								
-								for(int sample = 0; sample < doubleArray.length; sample += sampleRate/10)
+								
+								//ArrayList of notes played
+								List<ArrayList<Float>> freqArray = new ArrayList<ArrayList<Float>>(doubleArray.length/windowSize); 
+								ArrayList<Note> noteArray = new ArrayList<Note>(doubleArray.length/windowSize);
+								
+								
+								for(int sample = 0; sample < doubleArray.length; sample += windowSize)
 								{
 									double tempMax = 0;
-									for(int s = sample; s < sample + (sampleRate/20); s++)
+									for(int s = sample; s < sample + (windowSize/2); s++)
 									{
 										doubleBuffer[s-sample] = doubleArray[s];
 										tempMax = (Math.abs(doubleArray[s]) > tempMax)? Math.abs(doubleArray[s]) : tempMax;
@@ -97,10 +108,12 @@ public class RecordAudio {
 									max = (max < tempMax)? tempMax : (max * 0.8);
 									double decibelVal = pa.DoubleArraytoDecibelArray(doubleBuffer, max);
 									//System.out.println(decibelVal + "dB at " + (double) sample/sampleRate/2 +" s\n");
-									if(soundBegin != 0 && decibelVal < -10.0)
+									
+									if(soundBegin != 0 && decibelVal < normalizedRestThreshold)
 									{	
 										//No particular reason why dividing by 2. Just fits audio files better
 										System.out.println("Sound heard from " + soundBegin + " to " + (double) sample/(2*sampleRate));
+										
 										
 										
 										/*FREQUENCY ANALYSIS (IT'S ABOUT TO GO DOWN)*/
@@ -112,6 +125,7 @@ public class RecordAudio {
 											freqBuffer[(int) (pos - (soundBegin*(2*sampleRate)))] = doubleArray[pos];
 											
 									
+										
 										//Make ComplexNum array equivalent
 										ComplexNum compArray [] = pa.DoubleArraytoComplexArray(freqBuffer);
 
@@ -126,15 +140,35 @@ public class RecordAudio {
 										System.out.println("\n");
 										
 										
+
+										Note newNote = new Note();
+										
+										freqArray.add((ArrayList<Float>) f);
+										for(Float freq: f)
+											newNote.setNoteValue(pf.compareFreq(freq));
+											
+										newNote.setStartTime(soundBegin);
+										newNote.setEndTime((double) sample/(2*sampleRate));
+										newNote.setFrequency(f);
+										newNote.num = pf.num;
+										noteArray.add(newNote);
+										
+										
+										
 										
 										soundBegin = 0;
 									}
 									
-									else if(soundBegin == 0 && decibelVal > -10.0)
+									else if(soundBegin == 0 && decibelVal > normalizedRestThreshold)
 										soundBegin = (double) sample/sampleRate/2;
 								
 									
 								}
+								
+								
+								/*TRANSCRIBE TO SHEET MUSIC*/
+								TranscribeSheetMusic tsm = new TranscribeSheetMusic();
+								tsm.write(noteArray);
 								
 								System.out.println("It took " + (System.currentTimeMillis() - beginProcess)/1000 + "s to process. Do better!");
 							}

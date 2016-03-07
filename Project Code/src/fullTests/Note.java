@@ -7,14 +7,20 @@ public class Note {
 
 	private List<Float> frequency;
 	private List<String> noteValue;
+	private List<Integer> noteVal;
+	
 	private double startTime;
-	//private double endTime;
+	private double endTime;
 	private String timingValue;
+	private double timingValConstant; 		//Based of JMusic notation library constants
+	
+	public int num = 0;
 	
 	public Note()
 	{
 		frequency = new ArrayList<Float>();
 		noteValue = new ArrayList<String>();
+		noteVal = new ArrayList<Integer>();
 		startTime = 0;
 		timingValue = "";
 	}

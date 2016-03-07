@@ -19,7 +19,7 @@ public class ProcessAudio {
 	private	static int testSampleRate;
 	private String audioFileName;
 	
-	public static double normalizedRestThreshold = -10.0;		//For averaged frequencies below this threshold, a segment is considered at rest and will be notated as such
+	public static double normalizedRestThreshold = -12.0;		//For averaged frequencies below this threshold, a segment is considered at rest and will be notated as such
 	public static double normalizedNoteThreshold;		//For average frequencies above this threshold, a segment is considered
 	
 	public ProcessAudio(String fileName, int sampleRate)

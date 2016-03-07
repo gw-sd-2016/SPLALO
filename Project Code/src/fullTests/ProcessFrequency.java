@@ -11,6 +11,8 @@ public class ProcessFrequency {
 	private static double[] constantTones = {16.352, 17.324, 18.354, 19.455, 20.601, 21.827, 23.124, 24.499, 25.956, 27.50, 29.135, 30.868};
 	//private double soundArray[];
 	private	static int testSampleRate;
+	public static int num;
+	
 	
 	public ProcessFrequency(double sound[], int sampleFreq)
 	{
@@ -31,7 +33,10 @@ public class ProcessFrequency {
 				{
 					if(fileFreq <= (1.025 * constantTones[j] * (Math.pow(2,i)) )  )
 					{
+						num = 0;
 						String note = findNoteValue(j);
+						num = (i*7) + num;
+
 						String fullNote = note + i;
 						return fullNote;
 					}
@@ -71,7 +76,7 @@ public class ProcessFrequency {
 		}
 		
 		
-		List<Float> found = process(mag, testSampleRate, wave.length, 10);
+		List<Float> found = process(mag, testSampleRate, wave.length, 15);
 		List<Float> foundFrequencies = new ArrayList<Float>();
 		
 		for (float freq : found) 
@@ -118,7 +123,7 @@ public class ProcessFrequency {
 	      
 	      else 
 	      {
-	        if (maxF != -1) 
+	        if (maxF != -1 && (maxF > 20 && maxF < 20000)) 
 	        {
 	          found.add(maxF * sampleRate/numSamples);
 	          max = Integer.MIN_VALUE;
@@ -139,46 +144,78 @@ public class ProcessFrequency {
 
 		switch(val)
 		{
-			case 0:
-				return "C";
-
-			case 1:
-				return "C#";
-				
-			case 2:
-				return "D";		
-
-			case 3:
-				return "D#";		
-
-			case 4:
-				return "E";
-
-			case 5:
-				return "F";
-
-			case 6:
-				return "F#";
-
-			case 7:
-				return "G";			
-
-			case 8:
-				return "G#";		
-
-			case 9:
-				return "A";		
-
-			case 10:
-
-				return "A#";
-
-			case 11:
-
-				return "B";
-
-			default: 
-				return "There is an issue.";
+		case 0:
+		{
+			num = 0;
+			return "C";
+		}
+		
+		case 1:
+		{	
+			num = 0;
+			return "C_SHARP";
+		}	
+		case 2:
+		{
+			num = 1;
+			return "D";
+		}
+		case 3:
+		{
+			num = 1;
+			return "D_SHARP";		
+		}
+		
+		case 4:
+		{
+			num = 2;
+			return "E";
+		}
+		
+		case 5:
+		{
+			num = 3;
+			return "F";
+		}
+		
+		case 6:
+		{	
+			num = 3;
+			return "F_SHARP";
+		}
+		
+		case 7:
+		{	
+			num = 4;
+			return "G";			
+		}
+		
+		case 8:
+		{
+			num = 4;
+			return "G_SHARP";	
+		}
+		
+		case 9:
+		{
+			num = 5;
+			return "A";	
+		}
+		
+		case 10:
+		{
+			num = 5;
+			return "A_SHARP";	
+		}
+		
+		case 11:
+		{
+			num = 6;
+			return "B";	
+		}
+		
+		default: 
+			return "There is an issue.";
 
 		}
 
