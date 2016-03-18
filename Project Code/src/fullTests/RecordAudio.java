@@ -84,7 +84,7 @@ public class RecordAudio {
 								
 								//Variables to emulate windows and timing values & peak amplitudes within them.
 								double max = 0, soundBegin = 0;
-								int windowSize = sampleRate/10;
+								int windowSize = sampleRate/16;
 								double doubleBuffer[] = new double[windowSize];
 								
 								//Tracking program efficiency
@@ -99,7 +99,8 @@ public class RecordAudio {
 								for(int sample = 0; sample < doubleArray.length; sample += windowSize)
 								{
 									double tempMax = 0;
-									for(int s = sample; s < sample + (windowSize/2); s++)
+									int limit = doubleArray.length < sample + (windowSize/2)? doubleArray.length : sample + (windowSize/2); 
+									for(int s = sample; s < limit; s++)
 									{
 										doubleBuffer[s-sample] = doubleArray[s];
 										tempMax = (Math.abs(doubleArray[s]) > tempMax)? Math.abs(doubleArray[s]) : tempMax;
@@ -118,12 +119,17 @@ public class RecordAudio {
 										
 										/*FREQUENCY ANALYSIS (IT'S ABOUT TO GO DOWN)*/
 										//Copy segment of array into a new double buffer and run FFT on it
+										int length = 2;
+										while(length <= ( sample - ((int) (soundBegin*2*sampleRate)) )  )
+											{length *= 2;}
 										
-										double freqBuffer[] = new double [sample - ((int) (soundBegin*(2*sampleRate))) ];
+										double freqBuffer[] = new double [length/2];
 										
-										for(int pos = (int) (soundBegin*(2*sampleRate)); pos < sample; pos++)
+										for(int pos = (int) (soundBegin*(2*sampleRate)); pos < ((int) (soundBegin*(2*sampleRate)) + freqBuffer.length); pos++)
+										{
+											//System.out.println(pos + " < " + (pos+freqBuffer.length));
 											freqBuffer[(int) (pos - (soundBegin*(2*sampleRate)))] = doubleArray[pos];
-											
+										}	
 									
 										
 										//Make ComplexNum array equivalent
@@ -132,7 +138,7 @@ public class RecordAudio {
 										ProcessFrequency pf = new ProcessFrequency(freqBuffer, sampleRate);
 										
 										System.out.println("Processing ... ");
-										List<Float> f = pf.findFrequency(compArray);
+										List<Float> f = pf.FFT(compArray);
 											System.out.println(f.toString());
 										
 										for(Float x: f)
@@ -170,7 +176,7 @@ public class RecordAudio {
 								TranscribeSheetMusic tsm = new TranscribeSheetMusic();
 								tsm.write(noteArray);
 								
-								System.out.println("It took " + (System.currentTimeMillis() - beginProcess)/1000 + "s to process. Do better!");
+								System.out.println("It took " + (double)(System.currentTimeMillis() - beginProcess)/1000 + "s to process. Do better!");
 							}
 							
 						} 

@@ -11,13 +11,14 @@ public class ProcessFrequency {
 	private static double[] constantTones = {16.352, 17.324, 18.354, 19.455, 20.601, 21.827, 23.124, 24.499, 25.956, 27.50, 29.135, 30.868};
 	//private double soundArray[];
 	private	static int testSampleRate;
+	public static List<Integer> nums;
 	public static int num;
-	
 	
 	public ProcessFrequency(double sound[], int sampleFreq)
 	{
 		//soundArray = sound;
 		testSampleRate = sampleFreq;
+		nums = new ArrayList<Integer>();
 	}
 
 
@@ -33,10 +34,11 @@ public class ProcessFrequency {
 				{
 					if(fileFreq <= (1.025 * constantTones[j] * (Math.pow(2,i)) )  )
 					{
-						num = 0;
+						int num = 0;
 						String note = findNoteValue(j);
 						num = (i*7) + num;
 
+						nums.add(num);
 						String fullNote = note + i;
 						return fullNote;
 					}
@@ -50,6 +52,61 @@ public class ProcessFrequency {
 		return "Invalid";
 	}
 
+	public static List<Float> FFT(ComplexNum[] wave)
+	{
+		ComplexNum [] result = recursiveFFT(wave);
+		
+		double[] mag = new double[wave.length];
+		for(int k = 0; k < wave.length; k++)
+		{
+			mag[k] = (result[k].magnitude())/wave.length;
+			//System.out.print(mag[k] > 0? "Index: " + k + ", Mag: " + mag[k] + "\n" : "");
+		}
+		
+		List<Float> found = process(mag, testSampleRate, wave.length, 20 );
+		System.out.println("Size of found = " + found.size());
+		List<Float> foundFrequencies = new ArrayList<Float>();
+		for (double x : found) 
+		{
+			if(x > 20 && x < 20000)
+			foundFrequencies.add((float) x);	
+		}
+		return foundFrequencies;
+	}
+	
+	public static ComplexNum [] recursiveFFT(ComplexNum[] wave)
+	{
+		//Base Case
+		if(wave.length == 1)
+			return new ComplexNum[] {wave[0]};
+		
+		ComplexNum[] even = new ComplexNum[wave.length/2];
+		ComplexNum[] odd = new ComplexNum[wave.length/2];
+		
+		for(int i = 0; i < wave.length/2; i++)
+			{even[i] = wave[2*i];}
+		ComplexNum[] evenF = recursiveFFT(even);
+		
+		
+		for(int i = 0; i < wave.length/2; i++)
+			{odd[i] = wave[(2*i)+1];}
+		ComplexNum[] oddF = recursiveFFT(odd);
+		
+		
+		ComplexNum[] F = new ComplexNum[wave.length];
+		
+
+		for(int k = 0; k < wave.length/2; k++)
+		{	
+			ComplexNum constant = new ComplexNum( Math.cos(-2*Math.PI*k/wave.length), Math.sin(-2*Math.PI*k/wave.length) );
+			F[k] = evenF[k].add(oddF[k].multiply(constant));
+			F[k + (wave.length/2)] = evenF[k].minus((oddF[k].multiply(constant)));
+			
+		}
+		
+		return F;
+	}
+	
 	public List<Float> findFrequency(ComplexNum[] wave)
 	{
 		//The following method is an attempt to use DFT to find the frequencies of a wave
@@ -64,11 +121,14 @@ public class ProcessFrequency {
 			sum.setReal(0.0);
 			sum.setImaginary(0.0);
 			
+			//ComplexNum constant = new ComplexNum(( Math.cos(-2*Math.PI*k/wave.length) ) ,( Math.sin(-2*Math.PI*k/wave.length)  ));
+			
 			for(int t = 0; t < wave.length/2; t++)
 			{
 				temp.setReal(( (Math.cos(-2 * Math.PI * k * t /wave.length)) * wave[t].getReal()));
 				temp.setImaginary(( (Math.sin(- 2 * Math.PI * k * t /wave.length)) * wave[t].getReal()));
-				sum = sum.add(temp);	
+				sum = sum.add(temp);
+				
 			}
 			
 			mag[k] = sum.magnitude();
@@ -110,14 +170,16 @@ public class ProcessFrequency {
 	    ArrayList<Float> found = new ArrayList<Float>();
 	    double max = Integer.MIN_VALUE;
 	    int maxF = -1;
-	    for (int f = 0; f < freqDomain.length/2; f++) 
+	    for (int f = 20; f < freqDomain.length/2; f++) 
 	    {
 	      if (freqDomain[f] > average+(sigma*stdev)) 
 	      {
+	    	  //System.out.println("Frequency: " + f + ", Mag: " + freqDomain[f] + ", Stuff: " + sampleRate/numSamples);
 	        if (freqDomain[f] > max) 
 	        {
 	          max = freqDomain[f];
 	          maxF = f;
+	          
 	        }
 	      } 
 	      
@@ -141,7 +203,7 @@ public class ProcessFrequency {
 	{
 		//This method accepts some number that represents a note value in the array of frequencies and returns a string.
 		//For example, a frequency that has an index of 0 mod 12 represents a C in some octave. 1 mod 12 represents C#, and so on.
-
+		
 		switch(val)
 		{
 		case 0:

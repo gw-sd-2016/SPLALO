@@ -47,7 +47,15 @@ public class ComplexNum {
 		return newComplexNum;
 	}
 
+	public ComplexNum minus(ComplexNum c2)
+	{
+		ComplexNum newComplexNum = new ComplexNum();
+		newComplexNum.realNum = this.realNum - c2.realNum;
+		newComplexNum.imagNum = this.imagNum - c2.imagNum;
 
+		return newComplexNum;
+	}
+	
 	public ComplexNum multiply(ComplexNum c2)
 	{
 		ComplexNum newComplexNum = new ComplexNum();
