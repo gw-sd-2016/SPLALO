@@ -34,9 +34,9 @@ public class ProcessFrequency {
 				{
 					if(fileFreq <= (1.025 * constantTones[j] * (Math.pow(2,i)) )  )
 					{
-						int num = 0;
 						String note = findNoteValue(j);
 						num = (i*7) + num;
+						System.out.println("Here you go!! " + num);
 
 						nums.add(num);
 						String fullNote = note + i;
@@ -63,7 +63,7 @@ public class ProcessFrequency {
 			//System.out.print(mag[k] > 0? "Index: " + k + ", Mag: " + mag[k] + "\n" : "");
 		}
 		
-		List<Float> found = process(mag, testSampleRate, wave.length, 20 );
+		List<Float> found = process(mag, testSampleRate, wave.length, 25 );
 		System.out.println("Size of found = " + found.size());
 		List<Float> foundFrequencies = new ArrayList<Float>();
 		for (double x : found) 

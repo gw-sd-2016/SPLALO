@@ -4,6 +4,17 @@ import java.util.ArrayList;
 
 import jm.music.data.Phrase;
 import jm.util.View;
+
+import jm.JMC;
+import jm.music.data.CPhrase;
+//import jm.music.data.Note;
+import jm.music.data.Part;
+import jm.music.data.Phrase;
+import jm.music.data.Score;
+import jm.util.Play;
+import jm.util.Write;
+
+
 import pureToneTests.Note;
 
 public class TranscribeSheetMusic {
@@ -13,22 +24,26 @@ public class TranscribeSheetMusic {
 	{
 		//DISPLAY AS SHEET MUSIC
 		Phrase phr = new Phrase();
-		
+		phr.setNumerator(3);
+		phr.setDenominator(8);
 		for(int i = 0; i < noteArray.size(); i++)
 		{
 			//System.out.println(noteArray.get(i).getNoteValue().get(0));
 			jm.music.data.Note n = new jm.music.data.Note();
 			if(noteArray.get(i).getTimingValue() == "QUARTER_NOTE")
-				n.setDuration(jm.constants.Durations.QUARTER_NOTE );
+				n.setDuration(jm.constants.Durations.M );
 			
 
 			System.out.println(jMusicConstants[noteArray.get(i).num]);
 			n.setPitch(jMusicConstants[noteArray.get(i).num]);
 			phr.addNote(n);
+			//int[] ar = {jm.constants.Pitches.C4, jm.constants.Pitches.A4};
+			//phr.addChord(ar, jm.constants.Durations.M);
+			
 		}
 		
 
-        View.notate(phr);
+        View.notation(phr);
 	}
 	
 }

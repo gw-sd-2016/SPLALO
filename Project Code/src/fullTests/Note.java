@@ -11,6 +11,8 @@ public class Note {
 	
 	private double startTime;
 	private double endTime;
+	private double time;
+	
 	private String timingValue;
 	private double timingValConstant; 		//Based of JMusic notation library constants
 	
@@ -30,8 +32,17 @@ public class Note {
 	public void setNoteValue(String nv)
 		{noteValue.add(nv);}
 	
+	public void setNoteValue(int noteval) 
+	{noteVal.add(noteval);}
+	
 	public void setStartTime(double start)
 	{startTime = start;}
+	
+	public void setEndTime(double end)
+	{
+		endTime = end;
+		time = calculateTimeFrame();
+	}
 	
 	public void setFrequency(List<Float> freq)
 	{frequency = freq;}
@@ -39,19 +50,38 @@ public class Note {
 	public void setTimingValue(String timeVal)
 	{timingValue = timeVal;}
 	
+	public void setTimingValue(double jMusicConstant) 
+	{timingValConstant = jMusicConstant;}
+	
 	
 				/*ACCESSOR METHODS*/
 	public List<String> getNoteValues()
 	{return noteValue;}
 	
+	public List<Integer> getNoteValue()
+	{return noteVal;}
+	
 	public double getStartTime()
 	{return startTime;}
+	
+	public double getEndTime()
+	{return endTime;}
 	
 	public List<Float> getFrequency()
 	{return frequency;}
 
+	public double getTime()
+	{return time;}
+	
 	public String getTimingValue()
 	{return timingValue;}
 	
 	
+	
+	public double calculateTimeFrame()
+	{return Math.floor(1000*(endTime - startTime))/1000;}
+
+
+
+
 }

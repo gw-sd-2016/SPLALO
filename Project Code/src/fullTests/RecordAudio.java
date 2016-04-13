@@ -20,7 +20,6 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 
 import be.tarsos.dsp.AudioEvent;
 import be.tarsos.dsp.io.TarsosDSPAudioFormat;
-import pureToneTests.Note;
 
 public class RecordAudio {
 
@@ -28,6 +27,13 @@ public class RecordAudio {
 	private String audioFileName;
 	private static TargetDataLine targetLine;
 	public static double normalizedRestThreshold = -12.0;		//For averaged frequencies below this threshold, a segment is considered at rest and will be notated as such
+	public static double normalizedForteThreshold = -4.0;		//For Dynamics
+	public static double normalizedPianoThreshold = -10.0;		//For Dynamics
+	
+	public static int tempoUpperLimit = 205;
+	public static int tempoLowerLimit = 55;
+	public static double noteTimeUncertainty = 0.8;
+	
 	
 	public RecordAudio(int sampleRate, String fileName) throws LineUnavailableException
 	{
@@ -59,7 +65,7 @@ public class RecordAudio {
 					@Override public void run() 
 					{
 						AudioInputStream audioStream = new AudioInputStream(targetLine);
-						File audioFile2 = new File("just-major-sc.wav");					
+						File audioFile2 = new File("GoT.wav");					
 						
 						//OutputStream output = new ByteArrayOutputStream();
 						
@@ -84,7 +90,7 @@ public class RecordAudio {
 								
 								//Variables to emulate windows and timing values & peak amplitudes within them.
 								double max = 0, soundBegin = 0;
-								int windowSize = sampleRate/16;
+								int windowSize = sampleRate/32;
 								double doubleBuffer[] = new double[windowSize];
 								
 								//Tracking program efficiency
@@ -95,6 +101,8 @@ public class RecordAudio {
 								List<ArrayList<Float>> freqArray = new ArrayList<ArrayList<Float>>(doubleArray.length/windowSize); 
 								ArrayList<Note> noteArray = new ArrayList<Note>(doubleArray.length/windowSize);
 								
+								double timeSum = 0;
+								int numNote = 0;
 								
 								for(int sample = 0; sample < doubleArray.length; sample += windowSize)
 								{
@@ -106,7 +114,7 @@ public class RecordAudio {
 										tempMax = (Math.abs(doubleArray[s]) > tempMax)? Math.abs(doubleArray[s]) : tempMax;
 									}
 									
-									max = (max < tempMax)? tempMax : (max * 0.8);
+									max = (max < tempMax)? tempMax : (max * 0.75);
 									double decibelVal = pa.DoubleArraytoDecibelArray(doubleBuffer, max);
 									//System.out.println(decibelVal + "dB at " + (double) sample/sampleRate/2 +" s\n");
 									
@@ -155,8 +163,17 @@ public class RecordAudio {
 											
 										newNote.setStartTime(soundBegin);
 										newNote.setEndTime((double) sample/(2*sampleRate));
+										System.out.println("Timing Length: " + newNote.getTime());
+										
+										if(f.size() != 0)
+										{
+											timeSum += newNote.getTime();
+											numNote++;
+										}
+										
 										newNote.setFrequency(f);
 										newNote.num = pf.num;
+										System.out.println("AND HERE!!" + newNote.num);
 										noteArray.add(newNote);
 										
 										
@@ -171,10 +188,86 @@ public class RecordAudio {
 									
 								}
 								
+								double avgTime = (timeSum)/numNote;
+								System.out.println("Average beat time = " + avgTime);
+								
+								
+								/*CHECK FOR LOGICAL TEMPO VALUE*/
+								int tempo = 0;
+								while(tempo > tempoUpperLimit || tempo < tempoLowerLimit)
+								{
+									tempo = (int) (((60/avgTime) >= tempoLowerLimit && (60/avgTime) <= tempoUpperLimit)? (60/avgTime) : tempo);
+									if(tempo == 0)	avgTime /= 2;
+								}
+								
+								System.out.println("\n\nLogical tempo value = " + tempo);
+								
+								/*ASSIGN NOTE TIMING VALUES*/
+								for(Note x: noteArray)
+								{
+									//One-ThirtySecond Note 
+									if(x.getTime()/avgTime >= ((1/8) * noteTimeUncertainty) && x.getTime()/avgTime < ( (2-noteTimeUncertainty)/8) )
+										{x.setTimingValue("DEMISEMIQUAVER");}
+									
+									//Dotted One-ThirtySecond Note 
+									else if( x.getTime()/avgTime < ((3/16)* (2-noteTimeUncertainty)) )
+									{x.setTimingValue("DOTTED DEMISEMIQUAVER");}
+								
+									//One-Sixteenth Note
+									else if( x.getTime()/avgTime < ( (2-noteTimeUncertainty)/4) )
+										{x.setTimingValue("SEMIQUAVER");}
+									
+									//Dotted One-Sixteenth Note 
+									else if( x.getTime()/avgTime < ((3/8)* (2-noteTimeUncertainty)) )
+									{x.setTimingValue("DOTTED SEMIQUAVER");}
+								
+									//One-Eighth Note
+									else if( x.getTime()/avgTime < ( (2-noteTimeUncertainty)/2) )
+										{x.setTimingValue("QUAVER");}
+									
+									//Dotted One-Eighth Note
+									else if( x.getTime()/avgTime < ((3/4)* (2-noteTimeUncertainty)) )
+									{x.setTimingValue("DOTTED QUAVER");}
+									
+									//Quarter Note
+									else if( x.getTime()/avgTime < 1 *(2-noteTimeUncertainty) )
+										{x.setTimingValue("CROTCHET");}
+									
+									//Dotted Quarter Note
+									else if( x.getTime()/avgTime < 1.5 *(2-noteTimeUncertainty) )
+										{x.setTimingValue("DOTTED CROTCHET");}
+									
+									//Half Note
+									else if( x.getTime()/avgTime < 2 *(2-noteTimeUncertainty) )
+										{x.setTimingValue("MINIM");}
+									
+									//Dotted Half Note
+									else if( x.getTime()/avgTime < 3 *(2-noteTimeUncertainty) )
+										{x.setTimingValue("DOTTED MINIM");}
+									
+									//Whole Note
+									else if( x.getTime()/avgTime < 4 *(2-noteTimeUncertainty) )
+									{x.setTimingValue("SEMIBREVE");}
+									
+									//Dotted Whole Note
+									else if( x.getTime()/avgTime < 6 *(2-noteTimeUncertainty) )
+									{x.setTimingValue("DOTTED SEMIBREVE");}
+									
+									else x.setTimingValue("ERROR");
+									
+								}
+								
+								
+								for(Note y: noteArray)
+								{
+									System.out.println(y.getNoteValues());
+									System.out.println("Timing value = " + y.getTimingValue());
+									System.out.println("Duration = " + y.getTime() + "\n");
+								}
 								
 								/*TRANSCRIBE TO SHEET MUSIC*/
 								TranscribeSheetMusic tsm = new TranscribeSheetMusic();
-								tsm.write(noteArray);
+								//tsm.write(noteArray);
 								
 								System.out.println("It took " + (double)(System.currentTimeMillis() - beginProcess)/1000 + "s to process. Do better!");
 							}
