@@ -1,6 +1,5 @@
 package fullTests;
 
-import jm.gui.sketch.SketchScore;
 import jm.music.data.Score;
 
 public class GUITester {

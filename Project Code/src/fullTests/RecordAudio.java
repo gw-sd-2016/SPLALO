@@ -18,9 +18,6 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.TargetDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
-import be.tarsos.dsp.AudioEvent;
-import be.tarsos.dsp.io.TarsosDSPAudioFormat;
-
 public class RecordAudio {
 
 	private final int sampleRate;
@@ -32,7 +29,7 @@ public class RecordAudio {
 	
 	public static int tempoUpperLimit = 205;
 	public static int tempoLowerLimit = 55;
-	public static double noteTimeUncertainty = 0.8;
+	public static double noteTimeUncertainty = 0.8;				//0.8 gives calculations +/- 20% range to work with
 	
 	
 	public RecordAudio(int sampleRate, String fileName) throws LineUnavailableException
@@ -108,13 +105,16 @@ public class RecordAudio {
 								{
 									double tempMax = 0;
 									int limit = doubleArray.length < sample + (windowSize/2)? doubleArray.length : sample + (windowSize/2); 
+									
+									//Search for maximum sampled amplitude value in buffer
 									for(int s = sample; s < limit; s++)
 									{
 										doubleBuffer[s-sample] = doubleArray[s];
 										tempMax = (Math.abs(doubleArray[s]) > tempMax)? Math.abs(doubleArray[s]) : tempMax;
 									}
 									
-									max = (max < tempMax)? tempMax : (max * 0.75);
+									max = (max < tempMax)? tempMax : (max * 0.8);
+									System.out.println(max);
 									double decibelVal = pa.DoubleArraytoDecibelArray(doubleBuffer, max);
 									//System.out.println(decibelVal + "dB at " + (double) sample/sampleRate/2 +" s\n");
 									
@@ -172,8 +172,8 @@ public class RecordAudio {
 										}
 										
 										newNote.setFrequency(f);
-										newNote.num = pf.num;
-										System.out.println("AND HERE!!" + newNote.num);
+										//newNote.num = pf.num;
+										System.out.println("AND HERE!!" + newNote.getNoteValue());
 										noteArray.add(newNote);
 										
 										
@@ -267,7 +267,7 @@ public class RecordAudio {
 								
 								/*TRANSCRIBE TO SHEET MUSIC*/
 								TranscribeSheetMusic tsm = new TranscribeSheetMusic();
-								//tsm.write(noteArray);
+								tsm.write(noteArray);
 								
 								System.out.println("It took " + (double)(System.currentTimeMillis() - beginProcess)/1000 + "s to process. Do better!");
 							}

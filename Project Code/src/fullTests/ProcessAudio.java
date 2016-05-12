@@ -10,9 +10,6 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
-import be.tarsos.dsp.AudioEvent;
-import be.tarsos.dsp.filters.BandPass;
-
 
 public class ProcessAudio {
 
@@ -92,14 +89,6 @@ public class ProcessAudio {
 		rootMeanSquared = Math.sqrt(rootMeanSquared);
 		//System.out.println("Max = " + max);
 		return (20 * Math.log10(rootMeanSquared/max));
-	}
-	
-	
-	public double[] BandPassFilter(double doubleValues[], AudioEvent ae)
-	{
-		BandPass filter = new BandPass(2106.75f, 4158.5f, testSampleRate);
-		filter.process(ae);
-		return null;
 	}
 	
 	

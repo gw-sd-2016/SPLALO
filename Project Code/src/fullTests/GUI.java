@@ -12,7 +12,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
-import jm.gui.sketch.SketchScore;
 import jm.music.data.Score;
 import pureToneTests.Note; 
 
